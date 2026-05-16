@@ -65,8 +65,8 @@ def calculate_undervalued_deals(raw_properties):
         # 📊 REAL-WORLD VALUATION MATH
         price_per_sqft = round(price / sqft, 2)
 
-        # Let's say the baseline average for standard properties in this zone is $300/sqft.
-        MARKET_AVERAGE_SQFT_PRICE = 300
+        # Let's say the baseline average for standard properties in this zone is $1000/sqft.
+        MARKET_AVERAGE_SQFT_PRICE = 1000
         discount = round(((MARKET_AVERAGE_SQFT_PRICE - price_per_sqft) / MARKET_AVERAGE_SQFT_PRICE) * 100, 1)
 
         # Only track deals where price sits safely below market average
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         print(f"SUCCESS: Generated fresh real-world Excel sheet with {len(final_report)} properties!")
     else:
         # Emergency safeguard sheet so your git automation doesn't break if no deals are found
-        fallback_df = pd.DataFrame([{"System Message": "No undervalued deals found under $180/sqft in this pull."}])
+        fallback_df = pd.DataFrame([{"System Message": "No undervalued deals found under $1000/sqft in this pull."}])
         fallback_df.to_excel(file_name, index=False)
         print("WARNING: Saved fallback file due to empty data response.")
 
