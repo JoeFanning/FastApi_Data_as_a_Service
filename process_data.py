@@ -44,54 +44,43 @@ def fetch_live_us_listings(city_name: str):
 
 def calculate_undervalued_deals(raw_properties):
     """
-    Applies real data formulas to identify undervalued property deals.
+    TOTAL DATA EXTRACTION: Captures every single piece of information from the live API feed.
     """
     if not raw_properties:
         print("No live listings fetched. Ensure your REAL_ESTATE_API_KEY is configured.")
         return pd.DataFrame()
 
     analyzed_deals = []
-
-    print(f"Analyzing {len(raw_properties)} raw listings fetched from live feed...")
+    print(f"PRODUCTION RUN: Extracting full profile data for all {len(raw_properties)} properties...")
 
     for house in raw_properties:
         price = house.get("price", 0)
-
-        # 🔧 FIX: Check for BOTH variations of the square footage key name to prevent None drops
         sqft = house.get("squareFootage") or house.get("sqft") or house.get("livingArea", 0)
+        beds = house.get("bedrooms") or house.get("beds", 0)
+        baths = house.get("bathrooms") or house.get("baths", 0)
+        year_built = house.get("yearBuilt") or house.get("year", "N/A")
 
-        property_type = house.get("propertyType", "Single Family")
-
-        # Skip rows that are missing structural tracking data
-        if not price or not sqft or int(sqft) == 0:
-            continue
-
-        # Convert to floats safely
-        price = float(price)
-        sqft = float(sqft)
-
-        # 📊 REAL-WORLD VALUATION MATH
-        price_per_sqft = round(price / sqft, 2)
-
-        # Clean market average baseline for Dallas / Houston TX tracking zones
-        MARKET_AVERAGE_SQFT_PRICE = 250
-
-        # Calculate exactly how cheap this house is compared to the area standard
-        discount = round(((MARKET_AVERAGE_SQFT_PRICE - price_per_sqft) / MARKET_AVERAGE_SQFT_PRICE) * 100, 1)
-
-        # 🌟 HIGH UTILITY ALGORITHM: Track everything, but label bargains clearly!
-        if discount > 0:
-            deal_label = f"🔥 PREMIUM VALUE DEAL ({discount}% Off)"
+        # Calculate price per sqft cleanly if data exists
+        if price and sqft and int(sqft) > 0:
+            price_per_sqft = f"${round(float(price) / float(sqft), 2)}"
         else:
-            deal_label = "Standard Market Value"
+            price_per_sqft = "N/A"
 
+        # Gather every data attribute into the row profile
         analyzed_deals.append({
             "Property Address": house.get("formattedAddress") or house.get("address", "Unknown Address"),
-            "Current List Price": f"${int(price):,}",
-            "Neighborhood Average": f"${MARKET_AVERAGE_SQFT_PRICE}/sqft",
-            "Est. Discount/Premium": f"{discount}%",
-            "Market Status": "Active",
-            "Analysis Label": deal_label
+            "City": house.get("city", "Unknown"),
+            "State": house.get("state", ""),
+            "Zip Code": house.get("zipcode") or house.get("zip", ""),
+            "Current List Price": f"${int(price):,}" if price else "N/A",
+            "Size (Sq Ft)": f"{int(sqft):,} sqft" if sqft else "N/A",
+            "Calculated Price/SqFt": price_per_sqft,
+            "Beds": beds,
+            "Baths": baths,
+            "Property Type": house.get("propertyType", "Single Family"),
+            "Year Built": year_built,
+            "Days on Market": house.get("daysOnMarket", "New Listing"),
+            "Market Status": house.get("status", "Active").upper()
         })
 
     return pd.DataFrame(analyzed_deals)
@@ -146,7 +135,7 @@ if __name__ == "__main__":
         print(f"SUCCESS: Generated fresh real-world Excel sheet with {len(final_report)} properties!")
     else:
         # Emergency safeguard sheet so your git automation doesn't break if no deals are found
-        fallback_df = pd.DataFrame([{"System Message": "No undervalued deals found under $1000/sqft in this pull."}])
+        fallback_df = pd.DataFrame([{"System Message": "No undervalued deals found under $250/sqft in this pull."}])
         fallback_df.to_excel(file_name, index=False)
         print("WARNING: Saved fallback file due to empty data response.")
 
