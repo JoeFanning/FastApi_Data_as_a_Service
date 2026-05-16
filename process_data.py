@@ -65,8 +65,8 @@ def calculate_undervalued_deals(raw_properties):
         # 📊 REAL-WORLD VALUATION MATH
         price_per_sqft = round(price / sqft, 2)
 
-        # Let's say the baseline average for standard properties in this zone is $180/sqft.
-        MARKET_AVERAGE_SQFT_PRICE = 180
+        # Let's say the baseline average for standard properties in this zone is $300/sqft.
+        MARKET_AVERAGE_SQFT_PRICE = 300
         discount = round(((MARKET_AVERAGE_SQFT_PRICE - price_per_sqft) / MARKET_AVERAGE_SQFT_PRICE) * 100, 1)
 
         # Only track deals where price sits safely below market average
