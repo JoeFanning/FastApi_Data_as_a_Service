@@ -14,7 +14,9 @@ def fetch_raw_api_sample(city_name: str):
     target_city = city_name.strip() if city_name else "Dallas"
     print(f"Connecting to live database stream to inspect data headers for: {target_city}...")
 
-    url = "https://rentcast.io"
+    # 🌟 FIXED SECTION 1-6: Changed from rentcast.io to the official API data path
+    url = "https://api.rentcast.io/v1/listings/active"
+
     query_params = {
         "city": target_city,
         "state": "TX",
@@ -24,7 +26,7 @@ def fetch_raw_api_sample(city_name: str):
 
     headers = {
         "Accept": "application/json",
-        "X-Api-Key": os.getenv("REAL_ESTATE_API_KEY")
+        "X-Api-Key": os.getenv("RENTCAST_REAL_ESTATE_API_KEY")
     }
 
     try:
@@ -58,7 +60,6 @@ def extract_raw_headers(raw_properties):
     # Format the headers list into a clean single-column tracking DataFrame
     header_tracking_rows = []
     for header in api_header_names:
-        # Pull a sample value from the first house so you can see what type of data it holds
         sample_value = str(first_house_sample.get(header, "Empty/Null"))
         header_tracking_rows.append({
             "Available API Column Keys": header,
@@ -88,8 +89,7 @@ if __name__ == "__main__":
 
         # Style the inspection report
         header_font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
-        header_fill = PatternFill(start_color="7030A0", end_color="7030A0",
-                                  fill_type="solid")  # Elegant Purple for Blueprint mode
+        header_fill = PatternFill(start_color="7030A0", end_color="7030A0", fill_type="solid")  # Purple Blueprint mode
         data_fill = PatternFill(start_color="F2F4F7", end_color="F2F4F7", fill_type="solid")
 
         for col_num, column_title in enumerate(headers_df.columns, 1):
@@ -101,9 +101,10 @@ if __name__ == "__main__":
             for cell in row:
                 cell.fill = data_fill
 
+        # 🔧 FIXED: Kept the single correct, un-duplicated loop that utilizes col[0].column coordinate tracking
         for col in worksheet.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)
-            col_letter = get_column_letter(col.column)
+            col_letter = get_column_letter(col[0].column)
             worksheet.column_dimensions[col_letter].width = max(max_len + 4, 20)
 
     print(f"Spreadsheet generated securely: {file_name}")
