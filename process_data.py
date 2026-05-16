@@ -1,7 +1,7 @@
 import os
 import httpx
 import pandas as pd
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 print("--- Starting Premium DaaS Data Pipeline (Header Inspection Mode) ---")
@@ -14,7 +14,7 @@ def fetch_raw_api_sample(city_name: str):
     target_city = city_name.strip() if city_name else "Dallas"
     print(f"Connecting to live database stream to inspect data headers for: {target_city}...")
 
-    # 🌟 FIXED SECTION 1-6: Changed from rentcast.io to the official API data path
+    # Targeted active real estate data stream path
     url = "https://api.rentcast.io/v1/listings/active"
 
     query_params = {
@@ -27,7 +27,6 @@ def fetch_raw_api_sample(city_name: str):
     headers = {
         "Accept": "application/json",
         "X-Api-Key": os.getenv("RENTCAST_REAL_ESTATE_API_KEY")
-
     }
 
     try:
@@ -46,18 +45,21 @@ def extract_raw_headers(raw_properties):
     """
     Inspected data catcher: Unwraps the RentCast API dictionary safely.
     """
-    # If the response is a dictionary, let's see what keys it has inside!
+    # Safely unbox JSON collections or nested structural data keys
     if isinstance(raw_properties, dict):
         print(f"API returned a Dictionary structure. Available top-level keys: {list(raw_properties.keys())}")
 
-        # RentCast typically puts the houses inside a "listings" or "data" array key
+        # Extract listings array layer out of standard API wrapper structures
         actual_list = raw_properties.get("listings") or raw_properties.get("data") or []
 
         if isinstance(actual_list, list) and len(actual_list) > 0:
             raw_properties = actual_list
         else:
-            # If it's a flat dictionary single property, turn it into a list item
-            raw_properties = [raw_properties]
+            # Standard structural failover fallback mapping
+            if len(raw_properties) > 0:
+                raw_properties = [raw_properties]
+            else:
+                raw_properties = []
 
     if not raw_properties or not isinstance(raw_properties, list) or len(raw_properties) == 0:
         print("Data stream empty or malformed. Ensure your key is active in GitHub Secrets.")
@@ -113,7 +115,7 @@ if __name__ == "__main__":
             for cell in row:
                 cell.fill = data_fill
 
-        # 🔧 FIXED: Kept the single correct, un-duplicated loop that utilizes col[0].column coordinate tracking
+        # Auto-adjust column dimensions cleanly using explicit openpyxl cell properties
         for col in worksheet.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)
             col_letter = get_column_letter(col[0].column)
