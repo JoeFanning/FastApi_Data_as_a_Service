@@ -3,9 +3,10 @@ import httpx
 import pandas as pd
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
+from dotenv import load_dotenv
+load_dotenv()
 
 print("--- Starting Premium DaaS Data Pipeline (Header Inspection Mode) ---")
-
 
 def fetch_raw_api_sample(city_name: str):
     """
@@ -15,7 +16,9 @@ def fetch_raw_api_sample(city_name: str):
     print(f"Connecting to live database stream to inspect data headers for: {target_city}...")
 
     # Targeted active real estate data stream path
-    url = "https://api.rentcast.io/v1/listings/active"
+    # end points info page on rentcast: https://developers.rentcast.io/reference/rental-listings-long-term
+    url = "https://api.rentcast.io/v1/listings/rental/long-term"
+      # "https://api.rentcast.io/v1/listings/active"
 
     query_params = {
         "city": target_city,
