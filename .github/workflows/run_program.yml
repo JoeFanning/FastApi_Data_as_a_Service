@@ -2,6 +2,11 @@ name: Execute My Cloud Program
 
 on:
   workflow_dispatch:
+    inputs:
+      custom_msg:
+        description: 'Filter Text passed from FastAPI Dashboard'
+        required: false
+        default: ''
 
 jobs:
   run-logic:
@@ -15,18 +20,20 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Installs data tools on Microsoft's cloud computer
       - name: Install Data Libraries
         run: |
           python -m pip install --upgrade pip
           pip install pandas openpyxl
 
-      # Runs your python analytics script
+      # 🌟 THIS MAKES YOUR DATA SCRIPT AWARE OF THE TEXT PASSED
       - name: Execute Data Analytics Program
+        env:
+          FILTER_TEXT: ${{ github.event.inputs.custom_msg }}
         run: python process_data.py
 
-      # Automatically saves the finished Excel file right back into your repository
       - name: Commit and Push Generated Excel Sheet
+        env:
+          GITHUB_TOKEN: ${{ secrets.FASTAPI_DATA_AS_A_SERVICE }}
         run: |
           git config --global user.name "DaaS Pipeline Bot"
           git config --global user.email "bot@github.com"
