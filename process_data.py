@@ -27,6 +27,7 @@ def fetch_raw_api_sample(city_name: str):
     headers = {
         "Accept": "application/json",
         "X-Api-Key": os.getenv("RENTCAST_REAL_ESTATE_API_KEY")
+
     }
 
     try:
@@ -43,27 +44,38 @@ def fetch_raw_api_sample(city_name: str):
 
 def extract_raw_headers(raw_properties):
     """
-    Inspects the raw JSON data and extracts the exact key names (headers).
+    Inspected data catcher: Unwraps the RentCast API dictionary safely.
     """
-    if not raw_properties or not isinstance(raw_properties, list):
-        print("Data stream empty or malformed. Ensure your REAL_ESTATE_API_KEY is configured in GitHub Secrets.")
+    # If the response is a dictionary, let's see what keys it has inside!
+    if isinstance(raw_properties, dict):
+        print(f"API returned a Dictionary structure. Available top-level keys: {list(raw_properties.keys())}")
+
+        # RentCast typically puts the houses inside a "listings" or "data" array key
+        actual_list = raw_properties.get("listings") or raw_properties.get("data") or []
+
+        if isinstance(actual_list, list) and len(actual_list) > 0:
+            raw_properties = actual_list
+        else:
+            # If it's a flat dictionary single property, turn it into a list item
+            raw_properties = [raw_properties]
+
+    if not raw_properties or not isinstance(raw_properties, list) or len(raw_properties) == 0:
+        print("Data stream empty or malformed. Ensure your key is active in GitHub Secrets.")
         return pd.DataFrame([{"Detected API Response Keys": "ERROR: Vault credentials or data pull returned empty."}])
 
-    # 🔍 Grab the very first raw property dictionary object from the API list
+    # Grab the very first raw property dictionary object from the list
     first_house_sample = raw_properties[0]
 
-    # 🌟 EXTRACT ALL KEYS: Dynamically pull every single header name from the JSON payload
+    # Extract all data keys
     api_header_names = list(first_house_sample.keys())
+    print(f"SUCCESS: Successfully isolated {len(api_header_names)} unique database headers!")
 
-    print(f"SUCCESS: Successfully isolated {len(api_header_names)} unique database headers from the live API response!")
-
-    # Format the headers list into a clean single-column tracking DataFrame
     header_tracking_rows = []
     for header in api_header_names:
         sample_value = str(first_house_sample.get(header, "Empty/Null"))
         header_tracking_rows.append({
             "Available API Column Keys": header,
-            "Sample Raw Data Example": sample_value[:50]  # Truncate long strings for cleaner display
+            "Sample Raw Data Example": sample_value[:50]
         })
 
     return pd.DataFrame(header_tracking_rows)
