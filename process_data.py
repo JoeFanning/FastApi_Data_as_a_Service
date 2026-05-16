@@ -4,9 +4,11 @@ import pandas as pd
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from dotenv import load_dotenv
+
 load_dotenv()
 
 print("--- Starting Premium DaaS Data Pipeline (Header Inspection Mode) ---")
+
 
 def fetch_raw_api_sample(city_name: str):
     """
@@ -15,21 +17,23 @@ def fetch_raw_api_sample(city_name: str):
     target_city = city_name.strip() if city_name else "Dallas"
     print(f"Connecting to live database stream to inspect data headers for: {target_city}...")
 
-    # Targeted active real estate data stream path
-    # end points info page on rentcast: https://developers.rentcast.io/reference/rental-listings-long-term
     url = "https://api.rentcast.io/v1/listings/rental/long-term"
-      # "https://api.rentcast.io/v1/listings/active"
 
     query_params = {
         "city": target_city,
         "state": "TX",
         "status": "Active",
-        "limit": 5  # We only need a few samples to inspect the column names
+        "limit": 5
     }
+
+    api_key = os.getenv("RENTCAST_REAL_ESTATE_API_KEY")
+    if not api_key:
+        print("CRITICAL ERROR: RENTCAST_REAL_ESTATE_API_KEY environment variable is missing!")
+        return []
 
     headers = {
         "Accept": "application/json",
-        "X-Api-Key": os.getenv("RENTCAST_REAL_ESTATE_API_KEY")
+        "X-Api-Key": api_key
     }
 
     try:
@@ -46,32 +50,22 @@ def fetch_raw_api_sample(city_name: str):
 
 def extract_raw_headers(raw_properties):
     """
-    Inspected data catcher: Unwraps the RentCast API dictionary safely.
+    Inspected data catcher: Unwraps the RentCast API structures safely.
     """
-    # Safely unbox JSON collections or nested structural data keys
+    # RentCast endpoint returns a direct list [] of properties.
+    # Handle dictionary fallback wrappers if using different endpoints.
     if isinstance(raw_properties, dict):
         print(f"API returned a Dictionary structure. Available top-level keys: {list(raw_properties.keys())}")
-
-        # Extract listings array layer out of standard API wrapper structures
         actual_list = raw_properties.get("listings") or raw_properties.get("data") or []
-
-        if isinstance(actual_list, list) and len(actual_list) > 0:
-            raw_properties = actual_list
-        else:
-            # Standard structural failover fallback mapping
-            if len(raw_properties) > 0:
-                raw_properties = [raw_properties]
-            else:
-                raw_properties = []
+        raw_properties = actual_list if isinstance(actual_list, list) else [raw_properties]
 
     if not raw_properties or not isinstance(raw_properties, list) or len(raw_properties) == 0:
         print("Data stream empty or malformed. Ensure your key is active in GitHub Secrets.")
-        return pd.DataFrame([{"Detected API Response Keys": "ERROR: Vault credentials or data pull returned empty."}])
+        return pd.DataFrame(
+            [{"Available API Column Keys": "ERROR", "Sample Raw Data Example": "No data returned from API."}])
 
-    # Grab the very first raw property dictionary object from the list
+    # Grab the first raw property record
     first_house_sample = raw_properties[0]
-
-    # Extract all data keys
     api_header_names = list(first_house_sample.keys())
     print(f"SUCCESS: Successfully isolated {len(api_header_names)} unique database headers!")
 
@@ -80,7 +74,7 @@ def extract_raw_headers(raw_properties):
         sample_value = str(first_house_sample.get(header, "Empty/Null"))
         header_tracking_rows.append({
             "Available API Column Keys": header,
-            "Sample Raw Data Example": sample_value[:50]
+            "Sample Raw Data Example": sample_value[:50]  # Truncate long strings safely
         })
 
     return pd.DataFrame(header_tracking_rows)
@@ -89,40 +83,44 @@ def extract_raw_headers(raw_properties):
 if __name__ == "__main__":
     input_location = os.getenv("FILTER_TEXT", "Dallas")
 
-    # 1. Harvest raw data records
+    # 1. Harvest data
     raw_sample = fetch_raw_api_sample(input_location)
 
-    # 2. Extract the exact database header labels into a DataFrame
+    # 2. Extract schemas
     headers_df = extract_raw_headers(raw_sample)
 
     file_name = "Premium_Undervalued_Deals.xlsx"
 
-    # 3. Save the header inspection report to your repository spreadsheet
+    # 3. Export & style spreadsheet report
     with pd.ExcelWriter(file_name, engine='openpyxl') as writer:
         headers_df.to_excel(writer, sheet_name="API Keys Blueprint", index=False)
 
         workbook = writer.book
         worksheet = writer.sheets["API Keys Blueprint"]
 
-        # Style the inspection report
+        # Design system styles
         header_font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
-        header_fill = PatternFill(start_color="7030A0", end_color="7030A0", fill_type="solid")  # Purple Blueprint mode
-        data_fill = PatternFill(start_color="F2F4F7", end_color="F2F4F7", fill_type="solid")
+        header_fill = PatternFill(start_color="7030A0", end_color="7030A0", fill_type="solid")  # Purple
+        data_fill = PatternFill(start_color="F2F4F7", end_color="F2F4F7", fill_type="solid")  # Light grey
 
-        for col_num, column_title in enumerate(headers_df.columns, 1):
-            cell = worksheet.cell(row=1, column=col_num)
-            cell.font = header_font
-            cell.fill = header_fill
+        # Single-pass layout formatting loop
+        for col_idx, col in enumerate(worksheet.columns, 1):
+            max_len = 0
+            col_letter = get_column_letter(col_idx)
 
-        for row in worksheet.iter_rows(min_row=2, max_row=len(headers_df) + 1, min_col=1, max_col=2):
-            for cell in row:
-                cell.fill = data_fill
+            for row_idx, cell in enumerate(col, 1):
+                # Calculate text padding dynamically
+                max_len = max(max_len, len(str(cell.value or '')))
 
-        # Auto-adjust column dimensions cleanly using explicit openpyxl cell properties
-        for col in worksheet.columns:
-            max_len = max(len(str(cell.value or '')) for cell in col)
-            col_letter = get_column_letter(col[0].column)
-            worksheet.column_dimensions[col_letter].width = max(max_len + 4, 20)
+                # Apply styles based on row placement
+                if row_idx == 1:
+                    cell.font = header_font
+                    cell.fill = header_fill
+                else:
+                    cell.fill = data_fill
+
+            # Apply widths dynamically
+            worksheet.column_dimensions[col_letter].width = max(max_len + 5, 25)
 
     print(f"Spreadsheet generated securely: {file_name}")
     print("--- Data Pipeline Finished ---")
