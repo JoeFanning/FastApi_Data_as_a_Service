@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DaaS Control Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; text-align: center; padding-top: 50px; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; width: 400px; }
+        h1 { color: #1f4e78; margin-bottom: 20px; }
+        input[type="text"] { width: 92%; padding: 12px; margin-bottom: 20px; border: 2px solid #ccc; border-radius: 6px; font-size: 16px; outline: none; }
+        input[type="text"]:focus { border-color: #1f4e78; }
+        button { background: #1f4e78; color: white; border: none; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; width: 100%; }
+        button:hover { background: #153552; }
+        #status { margin-top: 20px; font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Data Pipeline Console</h1>
+    <p>Target Filter (e.g., Minimum Discount % or City Name):</p>
+
+    <!-- 🌟 NEW INPUT FIELD BOX -->
+    <input type="text" id="filterInput" placeholder="Enter target criteria (e.g., 10)">
+
+    <button onclick="triggerPipeline()">⚡ Run Cloud Pipeline</button>
+    <div id="status">System Ready</div>
+</div>
+
+<script>
+async function triggerPipeline() {
+    const statusDiv = document.getElementById('status');
+    const filterValue = document.getElementById('filterInput').value;
+
+    statusDiv.innerHTML = "⏳ Contacting local FastAPI switchboard...";
+    statusDiv.style.color = "#1f4e78";
+
+    try {
+        // Send the input box value straight to your local FastAPI server url
+        const response = await fetch(`http://localhost:8000/run-pipeline?filter_text=${encodeURIComponent(filterValue)}`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            statusDiv.innerHTML = "✅ Success! Cloud runner spawned with criteria: " + filterValue;
+            statusDiv.style.color = "#2e7d32";
+        } else {
+            statusDiv.innerHTML = "❌ Error: " + data.detail;
+            statusDiv.style.color = "#c62828";
+        }
+    } catch (err) {
+        statusDiv.innerHTML = "❌ Failed to connect to local FastAPI server.";
+        statusDiv.style.color = "#c62828";
+    }
+}
+</script>
+
+</body>
+</html>
