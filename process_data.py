@@ -52,32 +52,47 @@ def calculate_undervalued_deals(raw_properties):
 
     analyzed_deals = []
 
+    print(f"Analyzing {len(raw_properties)} raw listings fetched from live feed...")
+
     for house in raw_properties:
         price = house.get("price", 0)
-        sqft = house.get("squareFootage", 0)
-        beds = house.get("bedrooms", 0)
-        baths = house.get("bathrooms", 0)
+
+        # 🔧 FIX: Check for BOTH variations of the square footage key name to prevent None drops
+        sqft = house.get("squareFootage") or house.get("sqft") or house.get("livingArea", 0)
+
         property_type = house.get("propertyType", "Single Family")
 
-        if not price or not sqft:
+        # Skip rows that are missing structural tracking data
+        if not price or not sqft or int(sqft) == 0:
             continue
+
+        # Convert to floats safely
+        price = float(price)
+        sqft = float(sqft)
 
         # 📊 REAL-WORLD VALUATION MATH
         price_per_sqft = round(price / sqft, 2)
 
-        # Let's say the baseline average for standard properties in this zone is $1000/sqft.
-        MARKET_AVERAGE_SQFT_PRICE = 1000
+        # Clean market average baseline for Dallas / Houston TX tracking zones
+        MARKET_AVERAGE_SQFT_PRICE = 250
+
+        # Calculate exactly how cheap this house is compared to the area standard
         discount = round(((MARKET_AVERAGE_SQFT_PRICE - price_per_sqft) / MARKET_AVERAGE_SQFT_PRICE) * 100, 1)
 
-        # Only track deals where price sits safely below market average
+        # 🌟 HIGH UTILITY ALGORITHM: Track everything, but label bargains clearly!
         if discount > 0:
-            analyzed_deals.append({
-                "Property Address": house.get("formattedAddress", "Unknown"),
-                "Current List Price": f"${price:,}",
-                "Neighborhood Average": f"${MARKET_AVERAGE_SQFT_PRICE}",
-                "Est. Discount %": f"{discount}%",
-                "Market Status": "Active"
-            })
+            deal_label = f"🔥 PREMIUM VALUE DEAL ({discount}% Off)"
+        else:
+            deal_label = "Standard Market Value"
+
+        analyzed_deals.append({
+            "Property Address": house.get("formattedAddress") or house.get("address", "Unknown Address"),
+            "Current List Price": f"${int(price):,}",
+            "Neighborhood Average": f"${MARKET_AVERAGE_SQFT_PRICE}/sqft",
+            "Est. Discount/Premium": f"{discount}%",
+            "Market Status": "Active",
+            "Analysis Label": deal_label
+        })
 
     return pd.DataFrame(analyzed_deals)
 
