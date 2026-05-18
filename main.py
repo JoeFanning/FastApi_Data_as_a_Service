@@ -35,20 +35,40 @@ async def download_latest_excel_from_github():
                 print(f"Skipping sync: Repository file returned status code {response.status_code}")
         except Exception as e:
             print(f"Could not sync file from GitHub: {str(e)}")
-
+# @app.get:
+# This line sits inside your app and listens for incoming traffic from people visiting your website.
+# "/"
+# When your Python code uses ("/"), it is looking at that exact trailing slash. It tells your app: "Run this code only when the user
+# is on the main front page (://google.com), not when they type in extra words like /maps or /images
+# response_class=HTMLResponse
+# This tells the server exactly what to hand back to the visitor. Instead of handing them a raw spreadsheet or
+# text data (JSON), it promises to hand them a fully designed, clickable web page (HTML)
 
 @app.get("/", response_class=HTMLResponse)
+# async: Short for asynchronous. It tells the server that this function is allowed to pause and wait for
+# slow operations (like downloading a file from GitHub) without freezing the entire website for other visitors.
+# This function is called automatically by the FastAPI web server framework itself, not by a line of code that you manually write.
 async def home_page():
+    # Triggers an asynchronous background download to fetch the freshest copy of your Excel file
+    # directly from GitHub before loading the page.
     await download_latest_excel_from_github()
+    # Fallback Default Message: Pre-loads a temporary HTML paragraph (table_html) telling the user that
+    # no data is loaded yet, just in case the file doesn't exist.
     table_html = "<p class='no-data'>No data loaded yet. Click 'Refresh Market Data' to pull new data.</p>"
 
     if os.path.exists(EXCEL_FILE):
         try:
+            # Uses the pandas library to open and read the local spreadsheet file if it successfully exists on the server.
             df = pd.read_excel(EXCEL_FILE)
+            # df.to_html(classes='data-table', index=False) converts that spreadsheet data instantly into a standard HTML <table> with a
+            # custom CSS styling class (data-table), hiding the row numbers (index=False).
             table_html = df.to_html(classes='data-table', index=False)
+        # Wraps the file reading in a try/except block to prevent the entire website from crashing if the Excel file gets corrupted,
+        # displaying the error message on the page instead.
         except Exception as e:
             table_html = f"<p class='error'>Error reading data file: {str(e)}</p>"
 
+    # Returns this formatted HTML string wrapper (using an f-string) to render the web page layout in the user's browser.
     return f"""
     <!DOCTYPE html>
     <html>
