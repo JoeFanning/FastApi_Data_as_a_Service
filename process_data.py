@@ -18,7 +18,7 @@ def fetch_raw_api_sample(city_name: str):
     target_city = city_name.strip() if city_name else "Dallas"
     print(f"Connecting to live database stream to inspect data headers for: {target_city}...")
 
-    url = "https://rentcast.io"
+    url = "https://api.rentcast.io/v1/properties"
 
     query_params = {
         "city": target_city,
