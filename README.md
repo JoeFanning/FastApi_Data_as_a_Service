@@ -70,7 +70,7 @@ uvicorn main:app --reload
 
 Once started, access the project services here:
 - **Property Dashboard UI:** [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- **Interactive Swagger Docs:** [http://127.0.0](http://127.0.0)
+- **Interactive Swagger Docs:** [http://127.0.0](http://127.0.0:8000/docs)
 
 ---
 
