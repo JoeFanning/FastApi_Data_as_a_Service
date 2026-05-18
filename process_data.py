@@ -39,7 +39,7 @@ def fetch_raw_api_sample(city_name: str):
 
     try:
         # This line makes an outgoing call to another company's website (like the RentCast API) to ask for data.
-        response = httpx.get(url, headers=headers, params=query_params, timeout=20)
+        response = httpx.get(url, headers=headers, params=query_params, timeout=20, follow_redirects=True)
         if response.status_code == 200:
             # This line of code takes the raw data your program just received from the internet and converts it into
             # a standard Python dictionary or list that your script can easily read.
@@ -48,6 +48,7 @@ def fetch_raw_api_sample(city_name: str):
         else:
             print(f"API Warning: Status {response.status_code}. Details: {response.text}")
             return []
+
     except Exception as e:
         print(f"Network error: {e}")
         return []
