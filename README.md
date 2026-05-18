@@ -86,13 +86,6 @@ Once started, access the project services here:
 | **GET** | `/api.rentcast.io/v1/listings/rental/long-term/{id}` | Returns a single rental listing matching the specified id. | ✅ Active |
 ---
 
-## 🛠️ Work in Progress / Roadmap
-- [ ] Implement secure authentication handles for the upstream corporate API.
-- [ ] Map complex JSON responses into clean Pandas DataFrames within `process_data.py`.
-- [ ] Add query filtering parameters (e.g., zip code, price ranges) to the FastAPI endpoints.
-- [ ] Write asynchronous `fetch()` methods inside `index.html` to load housing stats into UI graphs.
-
----
 
 ## 📄 License
 This project is open-source software created by **Joe Fanning** and is licensed under the [MIT License](LICENSE).
