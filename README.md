@@ -82,8 +82,8 @@ Once started, access the project services here:
 | **GET** | `/` | Serves the `index.html` interface | ✅ Active |
 | **GET** | `/api.rentcast.io/v1/listings/sale` | Sale listings in a geographical area, or by a specific address, from corporate JSON endpoints. | ✅ Active |
 | **GET** | `/api.rentcast.io/v1/listings/sale/{id})` | Returns a single sale listing matching the specified id. | ✅ Active |
-| **GET** | /api.rentcast.io/v1/listings/rental/long-term | Search rental listings in a geographical area, or by a specific address. | ✅ Active |
-| **GET** | /api.rentcast.io/v1/listings/rental/long-term/{id} | Returns a single rental listing matching the specified id. | ✅ Active |
+| **GET** | `/api.rentcast.io/v1/listings/rental/long-term` | Search rental listings in a geographical area, or by a specific address. | ✅ Active |
+| **GET** | `/api.rentcast.io/v1/listings/rental/long-term/{id}` | Returns a single rental listing matching the specified id. | ✅ Active |
 ---
 
 ## 🛠️ Work in Progress / Roadmap
