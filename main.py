@@ -90,8 +90,8 @@ async def home_page():
     </head>
     <body>
         <div class="container">
-            <h1>New Houses Market Pipeline</h1>
-            <p>Enter a target location or criteria to scan the market for new undervalued housing deals.</p>
+            <h1>Texas State Sales Listings Pipeline</h1>
+            <p>Enter a target location in Texas for new undervalued housing deals.</p>
             <div class="controls">
                 <input type="text" id="filterText" placeholder="e.g., Dallas, TX or 3-bed">
                 <button onclick="triggerPipeline()">Refresh Market Data</button>
@@ -123,7 +123,6 @@ async def home_page():
     </body>
     </html>
     """
-
 
 @app.post("/run-pipeline")
 async def trigger_daas_pipeline(filter_text: str = Query("")):
