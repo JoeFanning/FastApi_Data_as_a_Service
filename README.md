@@ -69,8 +69,8 @@ uvicorn main:app --reload
 ```
 
 Once started, access the project services here:
-- **Property Dashboard UI:** [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- **Interactive Swagger Docs:** [http://127.0.0](http://127.0.0)
+- **Property Dashboard UI:** http://127.0.0.1:8000
+- **Interactive Swagger Docs:** http://127.0.0:8000/docs
 
 ---
 
@@ -80,18 +80,12 @@ Once started, access the project services here:
 | Method | Endpoint | Description | Status |
 | :--- | :--- | :--- | :--- |
 | **GET** | `/` | Serves the `index.html` interface | ✅ Active |
-| **GET** | `/api/v1/properties` | Fetches consolidated housing data from corporate JSON endpoints | 🛠️ In Progress |
-| **GET** | `/api/v1/properties/{id}` | Fetches granular details about a specific house asset | ⏳ Planned |
-
+| **GET** | `/api.rentcast.io/v1/listings/sale` | Sale listings in a geographical area, or by a specific address, from corporate JSON endpoints. | ✅ Active |
+| **GET** | `/api.rentcast.io/v1/listings/sale/{id})` | Returns a single sale listing matching the specified id. | ✅ Active |
+| **GET** | `/api.rentcast.io/v1/listings/rental/long-term` | Search rental listings in a geographical area, or by a specific address. | ✅ Active |
+| **GET** | `/api.rentcast.io/v1/listings/rental/long-term/{id}` | Returns a single rental listing matching the specified id. | ✅ Active |
 ---
 
-## 🛠️ Work in Progress / Roadmap
-- [ ] Implement secure authentication handles for the upstream corporate API.
-- [ ] Map complex JSON responses into clean Pandas DataFrames within `process_data.py`.
-- [ ] Add query filtering parameters (e.g., zip code, price ranges) to the FastAPI endpoints.
-- [ ] Write asynchronous `fetch()` methods inside `index.html` to load housing stats into UI graphs.
-
----
 
 ## 📄 License
 This project is open-source software created by **Joe Fanning** and is licensed under the [MIT License](LICENSE).
