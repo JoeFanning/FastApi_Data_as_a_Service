@@ -18,7 +18,7 @@ def fetch_raw_api_sample(city_name: str):
     target_city = city_name.strip() if city_name else "Dallas"
     print(f"Connecting to live database stream to inspect data headers for: {target_city}...")
 
-    url = "https://api.rentcast.io/v1/listings/rental/long-term"
+    url = "https://rentcast.io"
 
     query_params = {
         "city": target_city,
@@ -70,9 +70,6 @@ def extract_raw_headers(raw_properties):
     # This takes the entire list of house dictionaries and converts it into a full table instantly
     all_houses_df = pd.DataFrame(raw_properties)
 
-    # Save all houses to your Excel file
-    all_houses_df.to_excel("Premium_Undervalued_Deals.xlsx", index=False)
-
     # Return the dataframe so your web server can read it and display it on the home page
     return all_houses_df
 
@@ -89,13 +86,13 @@ if __name__ == "__main__":
     raw_sample = fetch_raw_api_sample(input_location)
 
     # 2. Extract schemas
-     headers_df = extract_raw_headers(raw_sample)
+    headers_df = extract_raw_headers(raw_sample)
 
     file_name = "Premium_Undervalued_Deals.xlsx"
 
     # 3. Export & style spreadsheet report
     with pd.ExcelWriter(file_name, engine='openpyxl') as writer:
-         headers_df.to_excel(writer, sheet_name="API Keys Blueprint", index=False)
+        headers_df.to_excel(writer, sheet_name="API Keys Blueprint", index=False)
 
 
         workbook = writer.book
