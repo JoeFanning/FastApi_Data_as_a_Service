@@ -18,13 +18,14 @@ def fetch_raw_api_sample(city_name: str):
     target_city = city_name.strip() if city_name else "Dallas"
     print(f"Connecting to live database stream to inspect data headers for: {target_city}...")
 
-    url = "https://api.rentcast.io/v1/properties"
+    url = "https://api.rentcast.io/v1/listings/sale"
+        # "https://api.rentcast.io/v1/properties"
 
     query_params = {
         "city": target_city,
         "state": "TX",
         "status": "Active",
-        "limit": 5
+        "limit": 10
     }
 
     api_key = os.getenv("RENTCAST_REAL_ESTATE_API_KEY")
