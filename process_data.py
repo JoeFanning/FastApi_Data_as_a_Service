@@ -9,7 +9,8 @@ load_dotenv()
 
 print("--- Starting Premium DaaS Data Pipeline (Header Inspection Mode) ---")
 
-
+# This function makes an outgoing call to another company's website (like the RentCast API) to ask for data and converts it into
+# a standard Python dictionary or list that your script can easily read.
 def fetch_raw_api_sample(city_name: str):
     """
     Fetches raw property objects directly from the live RentCast API.
@@ -37,8 +38,12 @@ def fetch_raw_api_sample(city_name: str):
     }
 
     try:
+        # This line makes an outgoing call to another company's website (like the RentCast API) to ask for data.
         response = httpx.get(url, headers=headers, params=query_params, timeout=20)
         if response.status_code == 200:
+            # This line of code takes the raw data your program just received from the internet and converts it into
+            # a standard Python dictionary or list that your script can easily read.
+            print(response.json())
             return response.json()
         else:
             print(f"API Warning: Status {response.status_code}. Details: {response.text}")
@@ -49,51 +54,49 @@ def fetch_raw_api_sample(city_name: str):
 
 
 def extract_raw_headers(raw_properties):
-    """
-    Inspected data catcher: Unwraps the RentCast API structures safely.
-    """
-    # RentCast endpoint returns a direct list [] of properties.
-    # Handle dictionary fallback wrappers if using different endpoints.
+    # The API Server can return json data as a list [] or as a dictionary {} the code below handles both senarios .
     if isinstance(raw_properties, dict):
         print(f"API returned a Dictionary structure. Available top-level keys: {list(raw_properties.keys())}")
         actual_list = raw_properties.get("listings") or raw_properties.get("data") or []
         raw_properties = actual_list if isinstance(actual_list, list) else [raw_properties]
+        print(f" Top level keys::::::::  {actual_list} ")  # Fixed missing parentheses for Python 3 print syntax
 
+    # If the data is not a list or dictionary or is corrupt or nothing is returned this code will handle it
     if not raw_properties or not isinstance(raw_properties, list) or len(raw_properties) == 0:
         print("Data stream empty or malformed. Ensure your key is active in GitHub Secrets.")
         return pd.DataFrame(
             [{"Available API Column Keys": "ERROR", "Sample Raw Data Example": "No data returned from API."}])
 
-    # Grab the first raw property record
-    first_house_sample = raw_properties[0]
-    api_header_names = list(first_house_sample.keys())
-    print(f"SUCCESS: Successfully isolated {len(api_header_names)} unique database headers!")
+    # This takes the entire list of house dictionaries and converts it into a full table instantly
+    all_houses_df = pd.DataFrame(raw_properties)
 
-    header_tracking_rows = []
-    for header in api_header_names:
-        sample_value = str(first_house_sample.get(header, "Empty/Null"))
-        header_tracking_rows.append({
-            "Available API Column Keys": header,
-            "Sample Raw Data Example": sample_value[:50]  # Truncate long strings safely
-        })
+    # Save all houses to your Excel file
+    all_houses_df.to_excel("Premium_Undervalued_Deals.xlsx", index=False)
 
-    return pd.DataFrame(header_tracking_rows)
+    # Return the dataframe so your web server can read it and display it on the home page
+    return all_houses_df
 
 
+# his tells Python, "Only run the code below if someone directly executes this specific script file."
+# It prevents the code from running accidentally if this file is imported into another script.
 if __name__ == "__main__":
+    # Looks for a system configuration setting named "FILTER_TEXT". If it doesn't find one, it safely
+    # defaults to using "Dallas" as the target city.
     input_location = os.getenv("FILTER_TEXT", "Dallas")
 
-    # 1. Harvest data
+    # 1. Harvests json data from server to a dictionary into a variable input_location
+    # Then rename it raw_sample
     raw_sample = fetch_raw_api_sample(input_location)
 
     # 2. Extract schemas
-    headers_df = extract_raw_headers(raw_sample)
+     headers_df = extract_raw_headers(raw_sample)
 
     file_name = "Premium_Undervalued_Deals.xlsx"
 
     # 3. Export & style spreadsheet report
     with pd.ExcelWriter(file_name, engine='openpyxl') as writer:
-        headers_df.to_excel(writer, sheet_name="API Keys Blueprint", index=False)
+         headers_df.to_excel(writer, sheet_name="API Keys Blueprint", index=False)
+
 
         workbook = writer.book
         worksheet = writer.sheets["API Keys Blueprint"]
